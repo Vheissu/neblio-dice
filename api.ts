@@ -6,6 +6,7 @@ import fetch from 'node-fetch';
 import express, { NextFunction } from 'express';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,28 @@ if (!globalThis.fetch) {
 // Starting price is $2 per NEBL (until API sets the value)
 globalThis.price = 2.00;
 
+const authMiddleware = (req: Express.Request, res: Express.Response, next: NextFunction) => {
+  // @ts-ignore
+  const token = req.header('x-access-token');
+
+  if (!token) {
+    return res.status(401).send('Access denied!');
+  }
+
+  try {
+    jwt.verify(token, process.env.token_secret, (err, decoded) => {
+      if (err) {
+        return res.status(400).send('Invalid token');
+      } else {
+        req.decoded = decoded;
+        next();
+      }
+    })
+  } catch (err) {
+    res.send('Invalid token');
+  }
+};
+
 (async () => {
   try {
     const dbClient = new Database();
@@ -25,6 +48,7 @@ globalThis.price = 2.00;
     const app = express();
     const port = process.env.PORT || 3000;
     app.use(express.json());
+    app.use(authMiddleware);
 
     app.locals.db = dbInstance;
 

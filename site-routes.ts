@@ -1,5 +1,7 @@
 import { JsonRpc } from './rpc-client';
 import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export class SiteRoutes {
     public router = express.Router();
@@ -37,7 +39,24 @@ export class SiteRoutes {
     }
 
     public signup = async (request: express.Request, response: express.Response) => {
+        const username = request.body.email;
 
+        const user = await request.app.locals.db.findOne({username});
+
+        if (user) {
+            return response.status(400).send('Username or password invalid');
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(request.body.password, salt);
+
+        const userObject = {
+            username,
+            password: hashPassword,
+            signup_date: Date.now()
+        };
+
+        await request.app.locals.db.insertOne(userObject);
     }
 
     public roll = async (request: express.Request, response: express.Response) => {
@@ -45,7 +64,29 @@ export class SiteRoutes {
     }
 
     public login = async (request: express.Request, response: express.Response) => {
+        const username = request.body.email;
 
+        const user = await request.app.locals.db.findOne({username});
+
+        if (!user) {
+            return response.status(400).send('Username or password invalid');
+        }
+
+        const compare = await bcrypt.compare(request.body.password, user.password);
+
+        if (!compare) {
+            return response.status(400).send('Username or password invalid');
+        }
+
+        const payload = {
+            user_id: user._id,
+            username: user.username
+        };
+
+        const token = jwt.sign(payload, process.env.token_secret);
+        response.header('x-access-token', token);
+
+        return response.status(200).send(token)
     }
 
     public logout = async (request: express.Request, response: express.Response) => {
