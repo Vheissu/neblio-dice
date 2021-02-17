@@ -22,36 +22,6 @@ export class ApiRoutes {
         this.router.get(`${this.path}/signmessage/:address/:message`, this.signMessage);
         this.router.get(`${this.path}/verifymessage/:address/:signature/:message`, this.signMessage);
         this.router.get(`${this.path}/getntp1balance/:identifier`, this.getNtp1Balance);
-        //this.router.get(`${this.path}/getnewaddress/:label`, this.getNewAddress);
-
-        this.router.get(`${this.path}/request/:amount/:memo/:seller/:buyer`, this.requestPayment);
-    }
-
-    public requestPayment = async (request: express.Request, response: express.Response) => {
-        // Each Neblio is equal to 100 million nibbles
-        // One Nibble represents 0.00000001 NEBL (equal to Neblios eight decimal)
-        const nibbles = Math.floor((request.params.amount as any / globalThis.price) * 100000000);
-
-        // The amount of Neblio required to complete the transaction in fiat price
-        const nebl = nibbles / 100000000;
-
-        const label = request.params.buyer;
-        const address = await (await this.rpcClient.request('getnewaddress', [label])).result;
-
-        const transactionData = {
-            timestamp: Date.now(),
-            expires: Date.now() + (15 * 60000), // 15 minutes expiry
-            status: 'new',
-            amount: request.params.amount,
-            rate: globalThis.price,
-            nebl_ask: nebl,
-            memo: request.params.memo,
-            seller: request.params.seller,
-            buyer: request.params.buyer,
-            address
-        };
-
-        return response.status(200).send(address);
     }
 
     public listReceivedByAddress = async (request: express.Request, response: express.Response) => {
@@ -103,14 +73,6 @@ export class ApiRoutes {
 
         return response.json(rpcResponse.result);
     }
-
-    // public getNewAddress = async (request: express.Request, response: express.Response) => {
-    //     const label = request.params.label;
-
-    //     const rpcResponse = await this.rpcClient.request('getnewaddress', [label]);
-
-    //     return response.json(rpcResponse.result);
-    // }
 
     public getBalance = async (request: express.Request, response: express.Response) => {
         const rpcResponse = await this.rpcClient.request('getbalance');

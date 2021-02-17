@@ -33,6 +33,7 @@ export class SiteRoutes {
         this.router.post(`/roll`, this.roll);
         this.router.post(`/login`, this.login);
         this.router.post(`/logout`, this.logout);
+        this.router.post(`/deposit`, this.deposit);
         this.router.post(`/withdraw`, this.withdraw);
         this.router.post(`/verify`, this.verify);
         this.router.post(`/bets`, this.bets);
@@ -41,7 +42,7 @@ export class SiteRoutes {
     public signup = async (request: express.Request, response: express.Response) => {
         const username = request.body.email;
 
-        const user = await request.app.locals.db.findOne({username});
+        const user = await request.app.locals.db.collection('users').findOne({username});
 
         if (user) {
             return response.status(400).send('Username or password invalid');
@@ -56,7 +57,7 @@ export class SiteRoutes {
             signup_date: Date.now()
         };
 
-        await request.app.locals.db.insertOne(userObject);
+        await request.app.locals.db.collection('users').insertOne(userObject);
     }
 
     public roll = async (request: express.Request, response: express.Response) => {
@@ -66,7 +67,7 @@ export class SiteRoutes {
     public login = async (request: express.Request, response: express.Response) => {
         const username = request.body.email;
 
-        const user = await request.app.locals.db.findOne({username});
+        const user = await request.app.locals.db.collection('users').findOne({username});
 
         if (!user) {
             return response.status(400).send('Username or password invalid');
@@ -91,6 +92,22 @@ export class SiteRoutes {
 
     public logout = async (request: express.Request, response: express.Response) => {
 
+    }
+
+    public deposit = async (request: express.Request, response: express.Response) => {
+        const depositModel = {
+            username: request.body.username,
+            amount: request.body.amount,
+            status: 'new'
+        };
+
+        const deposits = await request.app.locals.db.collection('deposits');
+
+        const user = await request.app.locals.db.collection('users').findOne({username: request.body.username});
+
+        const address = await (await this.rpcClient.request('getnewaddress', [request.body.username])).result;
+
+        deposits.insertOne(depositModel);
     }
 
     public withdraw = async (request: express.Request, response: express.Response) => {
