@@ -1,0 +1,36 @@
+{
+  "name": "neblio-dice",
+  "version": "0.0.1",
+  "description": "A simple dice game with transparent RNG for the Neblio blockchain",
+  "main": "api.ts",
+  "scripts": {
+    "test": "npm run-script test",
+    "start": "npx ts-node api.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vheissu/neblio-dice.git"
+  },
+  "author": "Dwayne Charrington <dwaynecharrington@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Vheissu/neblio-dice/issues"
+  },
+  "homepage": "https://github.com/Vheissu/neblio-dice#readme",
+  "dependencies": {
+    "bignumber.js": "^9.0.1",
+    "express": "^4.17.1",
+    "mongodb": "^3.6.4",
+    "node-fetch": "^2.6.1",
+    "qrcode": "^1.4.4",
+    "seedrandom": "^3.0.5",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.11",
+    "@types/mongodb": "^3.6.7",
+    "dotenv": "^8.2.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.5"
+  }
+}
