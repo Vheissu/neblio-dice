@@ -1,12 +1,13 @@
+import { JsonRpc } from './rpc-client';
 import express from 'express';
-import crypto from 'crypto';
-import fs from 'fs';
-import QRCode from 'qrcode';
 
 export class SiteRoutes {
     public router = express.Router();
+    public rpcClient: JsonRpc;
 
-    constructor() {
+    constructor(rpcClient: JsonRpc) {
+        this.rpcClient = rpcClient;
+
         this.router.get('/', (request: express.Request, response: express.Response) => {
             return response.status(200).send(`Let's make some money.`)
         });
@@ -26,12 +27,44 @@ export class SiteRoutes {
             return response.status(200).send(`${nebl} NEBL`);
         });
 
-        this.router.get(`/generate-qr/:text`, this.generateQrCode);
+        this.router.get(`/signup`, this.signup);
+        this.router.post(`/roll`, this.roll);
+        this.router.post(`/login`, this.login);
+        this.router.post(`/logout`, this.logout);
+        this.router.post(`/withdraw`, this.withdraw);
+        this.router.post(`/verify`, this.verify);
+        this.router.post(`/bets`, this.bets);
     }
 
-    public generateQrCode = async (request: express.Request, response: express.Response) => {
-        const text = request.params.text;
+    public signup = async (request: express.Request, response: express.Response) => {
 
-        const filename = 'qr/' + crypto.createHash('sha1').update(decodeURIComponent(text)).digest('hex') + '.png';
+    }
+
+    public roll = async (request: express.Request, response: express.Response) => {
+
+    }
+
+    public login = async (request: express.Request, response: express.Response) => {
+
+    }
+
+    public logout = async (request: express.Request, response: express.Response) => {
+
+    }
+
+    public withdraw = async (request: express.Request, response: express.Response) => {
+        // Get balance and 2 confirmations
+        const rpcResponse = await this.rpcClient.request('getbalance', [request.params.address, 2]);
+        const balance = rpcResponse.result;
+
+        console.log(balance);
+    }
+
+    public verify = async (request: express.Request, response: express.Response) => {
+
+    }
+
+    public bets = async (request: express.Request, response: express.Response) => {
+
     }
 }

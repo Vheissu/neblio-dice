@@ -9,10 +9,11 @@ export class Database {
         this.client = await MongoClient.connect(dbUrl, { useNewUrlParser: true, useUnifiedTopology: true });
         this.db = await this.client.db(dbName);
 
-        const invoices = await this.getCollection('invoices');
+        const users = await this.getCollection('users');
 
-        if (invoices === null) {
-            await this.db.createCollection('invoices');
+        if (users === null) {
+            await this.db.createCollection('users');
+            await this.db.createCollection('wallets');
         }
 
         return this.db;

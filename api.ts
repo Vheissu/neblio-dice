@@ -20,11 +20,13 @@ globalThis.price = 2.00;
 (async () => {
   try {
     const dbClient = new Database();
-    await dbClient.init('mongodb://localhost', 'neblio-pay');
+    const dbInstance = await dbClient.init('mongodb://localhost', 'neblio-pay');
 
     const app = express();
     const port = process.env.PORT || 3000;
     app.use(express.json());
+
+    app.locals.db = dbInstance;
 
     // Middleware to generate a unique ID for each request
     app.use((request: Express.Request, response: Express.Response, next: NextFunction) => {
@@ -35,7 +37,7 @@ globalThis.price = 2.00;
     const rpcClient = new JsonRpc(process.env.rpchost, process.env.rpcuser, process.env.rpcpass);
   
     const apiRoutes = new ApiRoutes(rpcClient);
-    const siteRoutes = new SiteRoutes();
+    const siteRoutes = new SiteRoutes(rpcClient);
     
     app.use('/', siteRoutes.router);
     app.use('/', apiRoutes.router);
@@ -60,5 +62,5 @@ const getCurrentExchangeRate = async (fiat: string = 'usd') => {
 
 getCurrentExchangeRate(process.env.base_currency);
 
-// Update exchange rate price every 3 minutes
-setInterval(() => getCurrentExchangeRate(process.env.base_currency), 3 * 60 * 1000);
+// Update exchange rate price every 5 minutes
+setInterval(() => getCurrentExchangeRate(process.env.base_currency), 5 * 60 * 1000);
