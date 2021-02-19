@@ -1,5 +1,6 @@
 
 import { Db, MongoClient } from 'mongodb';
+import { Deposit, User } from './interfaces';
 
 export class Database {
     private db: Db = null;
@@ -14,6 +15,7 @@ export class Database {
         if (users === null) {
             await this.db.createCollection('users');
             await this.db.createCollection('wallets');
+            await this.db.createCollection('deposits');
         }
 
         return this.db;
@@ -35,18 +37,27 @@ export class Database {
           });
     }
 
-    async getInvoice(invoiceId: string) {
-        const invoicesTable = this.db.collection('invoices');
+    async getUser(userId: string) {
+        const usersTable = this.db.collection('users');
     
-        return invoicesTable.findOne({ _id: invoiceId });
+        return usersTable.findOne({ _id: userId });
       }
 
-    async addInvoice(invoice) {
-        const invoicesTable = this.db.collection('invoices');
-        const result = await invoicesTable.insertOne(invoice);
+    async addUser(user: User) {
+        const usersTable = this.db.collection('users');
+        const result = await usersTable.insertOne(user);
 
         const id = result[0]._id;
 
         return id;
     }
+
+    async addDeposit(deposit: Deposit) {
+      const depositTable = this.db.collection('deposits');
+      const result = await depositTable.insertOne(deposit);
+
+      const id = result[0]._id;
+
+      return id;
+  }
 }

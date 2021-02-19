@@ -2,6 +2,7 @@ import { JsonRpc } from './rpc-client';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { generateAddress } from './helpers';
 
 export class SiteRoutes {
     public router = express.Router();
@@ -11,25 +12,10 @@ export class SiteRoutes {
         this.rpcClient = rpcClient;
 
         this.router.get('/', (request: express.Request, response: express.Response) => {
-            return response.status(200).send(`Let's make some money.`)
+            return response.status(200).send(`Roll the dice.`)
         });
 
-        this.router.get('/price', (request: express.Request, response: express.Response) => {
-            return response.status(200).send(`${globalThis.price}`);
-        });
-
-        this.router.get('/convert/:amount', (request: express.Request, response: express.Response) => {
-            // Each Neblio is equal to 100 million nibbles
-            // One Nibble represents 0.00000001 NEBL (equal to Neblios eight decimal)
-            const nibbles = Math.floor((request.params.amount as any / globalThis.price) * 100000000);
-
-            // The amount of Neblio required to complete the transaction in fiat price
-            const nebl = nibbles / 100000000;
-
-            return response.status(200).send(`${nebl} NEBL`);
-        });
-
-        this.router.get(`/signup`, this.signup);
+        this.router.post(`/signup`, this.signup);
         this.router.post(`/roll`, this.roll);
         this.router.post(`/login`, this.login);
         this.router.post(`/logout`, this.logout);
@@ -39,8 +25,12 @@ export class SiteRoutes {
         this.router.post(`/bets`, this.bets);
     }
 
-    public signup = async (request: express.Request, response: express.Response) => {
-        const username = request.body.email;
+    public async roll (request: express.Request, response: express.Response) {
+
+    }
+
+    public async signup (request: express.Request, response: express.Response) {
+        const username = request.body.username;
 
         const user = await request.app.locals.db.collection('users').findOne({username});
 
@@ -54,18 +44,16 @@ export class SiteRoutes {
         const userObject = {
             username,
             password: hashPassword,
-            signup_date: Date.now()
+            signup_date: new Date()
         };
 
-        await request.app.locals.db.collection('users').insertOne(userObject);
+        const result = await request.app.locals.db.collection('users').insertOne(userObject);
+
+        response.json(result.ops[0]);
     }
 
-    public roll = async (request: express.Request, response: express.Response) => {
-
-    }
-
-    public login = async (request: express.Request, response: express.Response) => {
-        const username = request.body.email;
+    public async login (request: express.Request, response: express.Response) {
+        const username = request.body.username;
 
         const user = await request.app.locals.db.collection('users').findOne({username});
 
@@ -87,30 +75,34 @@ export class SiteRoutes {
         const token = jwt.sign(payload, process.env.token_secret);
         response.header('x-access-token', token);
 
-        return response.status(200).send(token)
+        return response.status(200).send(token);
     }
 
-    public logout = async (request: express.Request, response: express.Response) => {
+    public async logout (request: express.Request, response: express.Response) {
 
     }
 
-    public deposit = async (request: express.Request, response: express.Response) => {
-        const depositModel = {
-            username: request.body.username,
-            amount: request.body.amount,
-            status: 'new'
-        };
-
-        const deposits = await request.app.locals.db.collection('deposits');
-
+    public async deposit (request: express.Request, response: express.Response) {
         const user = await request.app.locals.db.collection('users').findOne({username: request.body.username});
 
-        const address = await (await this.rpcClient.request('getnewaddress', [request.body.username])).result;
+        if ( user ) {
+            const deposits = await request.app.locals.db.collection('deposits');
 
-        deposits.insertOne(depositModel);
+            const label = `${request.body.username}-${Date.now()}`;
+
+            const depositModel = {
+                createdAt: new Date(),
+                username: request.body.username,
+                amount: request.body.amount,
+                address: generateAddress(label),
+                status: 'new'
+            };
+
+            const row = await deposits.insertOne(depositModel);
+        }
     }
 
-    public withdraw = async (request: express.Request, response: express.Response) => {
+    public async withdraw (request: express.Request, response: express.Response) {
         // Get balance and 2 confirmations
         const rpcResponse = await this.rpcClient.request('getbalance', [request.params.address, 2]);
         const balance = rpcResponse.result;
@@ -118,11 +110,11 @@ export class SiteRoutes {
         console.log(balance);
     }
 
-    public verify = async (request: express.Request, response: express.Response) => {
+    public async verify (request: express.Request, response: express.Response) {
 
     }
 
-    public bets = async (request: express.Request, response: express.Response) => {
+    public async bets (request: express.Request, response: express.Response) {
 
     }
 }

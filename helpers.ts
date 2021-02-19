@@ -4,24 +4,51 @@ const MAX_BET = 10;
 
 import seedrandom from 'seedrandom';
 import BigNumber from 'bignumber.js';
+import jwt from 'jsonwebtoken';
+import { JsonRpc } from './rpc-client';
+
+const rpcClient = new JsonRpc(process.env.rpchost, process.env.rpcuser, process.env.rpcpass);
+
+export const generateAddress = async(label: string) => {
+    try {
+        return (await rpcClient.request('getnewaddress', [label])).result;
+    } catch (e) {
+        return null;
+    }
+}
+
+export const verifyToken = async (token, secret) => {
+    return new Promise((resolve, reject) => {
+      if (!token) {
+        return null;
+      }
+  
+      jwt.verify(token, secret, (err, decoded) => {
+        if (err) {
+          return reject(err);
+        }
+  
+        return resolve(decoded);
+      });
+    });
+  };
 
 // Random Number Generator
-const rng = (seed: string) => {
+export const rng = (seed: string) => {
     const random = seedrandom(`${seed}`).double();
     const randomRoll = Math.floor(random * 100) + 1;
 
     return randomRoll;
 };
 
-const roller = (guess: number, amount: string, latestBlock: any) => {
-    
+export const roller = (guess: number, amount: string, blockHash: any) => {
     // Bet amount of NEBL is valid
     if (parseFloat(amount) >= MIN_BET && parseFloat(amount) <= MAX_BET) {
         // Guess (user roll) is valid
         if ( (guess >= 2 && guess <= 96) ) {
-            if (latestBlock && latestBlock?.txid) {
+            if (blockHash) {
                 // Roll a random value
-                const random = rng(latestBlock.txid);
+                const random = rng(blockHash);
 
                 // Calculate the multiplier percentage
                 const multiplier = new BigNumber(1).minus(HOUSE_EDGE).multipliedBy(100).dividedBy(guess);

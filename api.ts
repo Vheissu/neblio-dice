@@ -15,9 +15,6 @@ if (!globalThis.fetch) {
 	globalThis.fetch = fetch;
 }
 
-// Starting price is $2 per NEBL (until API sets the value)
-globalThis.price = 2.00;
-
 // const authMiddleware = (req: Express.Request, res: Express.Response, next: NextFunction) => {
 //   // @ts-ignore
 //   const token = req.header('x-access-token');
@@ -43,7 +40,7 @@ globalThis.price = 2.00;
 (async () => {
   try {
     const dbClient = new Database();
-    const dbInstance = await dbClient.init('mongodb://localhost', 'neblio-pay');
+    const dbInstance = await dbClient.init('mongodb://localhost', 'neblio-dice');
 
     const app = express();
     const port = process.env.PORT || 3000;
@@ -74,17 +71,3 @@ globalThis.price = 2.00;
     process.exit(1);
   }
 })();
-
-const getCurrentExchangeRate = async (fiat: string = 'usd') => {
-  const request = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=neblio&vs_currencies=${fiat}`);
-  const response = await request.json();
-
-  const price  = response.neblio[fiat];
-
-  globalThis.price = parseFloat(price);
-}
-
-getCurrentExchangeRate(process.env.base_currency);
-
-// Update exchange rate price every 5 minutes
-setInterval(() => getCurrentExchangeRate(process.env.base_currency), 5 * 60 * 1000);
